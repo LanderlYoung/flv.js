@@ -16,6 +16,7 @@ jsdoc
 dist
 build/temp
 coverage/
+package-lock.json
 
 #################
 ## Eclipse

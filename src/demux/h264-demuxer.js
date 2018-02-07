@@ -16,36 +16,54 @@
  * limitations under the License.
  */
 
-class H264Demuxer {
+import Demuxer from './demuxer';
+
+class H264Demuxer extends Demuxer {
 
     constructor(probeData, config) {
+        super();
+
         this.TAG = 'H264Demuxer';
+
+        this._config = config;
+
+        this._dataOffset = probeData.dataOffset;
+        this._firstParse = true;
+        this._dispatch = false;
+
+        this._hasAudio = probeData.hasAudioTrack;
+        this._hasVideo = probeData.hasVideoTrack;
     }
 
     static probe(buffer) {
-        // let data = new Uint8Array(buffer);
-        // let mismatch = {match: false};
-        //
-        // if (data[0] !== 0x46 || data[1] !== 0x4C || data[2] !== 0x56 || data[3] !== 0x01) {
-        //     return mismatch;
-        // }
-        //
-        // let hasAudio = ((data[4] & 4) >>> 2) !== 0;
-        // let hasVideo = (data[4] & 1) !== 0;
-        //
-        // let offset = ReadBig32(data, 5);
-        //
-        // if (offset < 9) {
-        //     return mismatch;
-        // }
-        //
-        // return {
-        //     match: true,
-        //     consumed: offset,
-        //     dataOffset: offset,
-        //     hasAudioTrack: hasAudio,
-        //     hasVideoTrack: hasVideo
-        // };
+        let data = new Uint8Array(buffer);
+        let mismatch = {match: false};
+
+        if (data[0] !== 0x46 || data[1] !== 0x4C || data[2] !== 0x56 || data[3] !== 0x01) {
+            return mismatch;
+        }
+
+        let hasVideo = (data[4] & 1) !== 0;
+
+        let offset = Demuxer.ReadBig32(data, 5);
+
+        if (offset < 9) {
+            return mismatch;
+        }
+
+        return {
+            match: true,
+            consumed: offset,
+            dataOffset: offset,
+            hasAudioTrack: false,
+            hasVideoTrack: true
+        };
+    }
+
+    // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
+    // override
+    parseChunks(chunk, byteStart) {
+
     }
 
 }

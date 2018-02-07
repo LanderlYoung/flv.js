@@ -24,26 +24,6 @@ import MediaInfo from '../core/media-info.js';
 import IllegalStateException from '../utils/exception.js';
 import Demuxer from './demuxer';
 
-function Swap16(src) {
-    return (((src >>> 8) & 0xFF) |
-            ((src & 0xFF) << 8));
-}
-
-function Swap32(src) {
-    return (((src & 0xFF000000) >>> 24) |
-            ((src & 0x00FF0000) >>> 8)  |
-            ((src & 0x0000FF00) << 8)   |
-            ((src & 0x000000FF) << 24));
-}
-
-function ReadBig32(array, index) {
-    return ((array[index] << 24)     |
-            (array[index + 1] << 16) |
-            (array[index + 2] << 8)  |
-            (array[index + 3]));
-}
-
-
 class FLVDemuxer extends Demuxer {
 
     constructor(probeData, config) {
@@ -105,7 +85,7 @@ class FLVDemuxer extends Demuxer {
         let hasAudio = ((data[4] & 4) >>> 2) !== 0;
         let hasVideo = (data[4] & 1) !== 0;
 
-        let offset = ReadBig32(data, 5);
+        let offset = Demuxer.ReadBig32(data, 5);
 
         if (offset < 9) {
             return mismatch;

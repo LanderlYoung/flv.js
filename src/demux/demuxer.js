@@ -1,4 +1,8 @@
 /*
+ * Copyright (C) 2016 Bilibili. All Rights Reserved.
+ *
+ * @author zheng qian <xqq@xqq.im>
+ *
  * Copyright (C) 2018 landerlyoung@gmail.com. All Rights Reserved.
  *
  * @author landerlyoung@gmail.com
@@ -20,6 +24,25 @@ import MediaInfo from '../core/media-info';
 import {NotImplementedException} from '../utils/exception';
 
 class Demuxer {
+
+    static Swap16(src) {
+        return (((src >>> 8) & 0xFF) |
+            ((src & 0xFF) << 8));
+    }
+
+    static Swap32(src) {
+        return (((src & 0xFF000000) >>> 24) |
+            ((src & 0x00FF0000) >>> 8) |
+            ((src & 0x0000FF00) << 8) |
+            ((src & 0x000000FF) << 24));
+    }
+
+    static ReadBig32(array, index) {
+        return ((array[index] << 24) |
+            (array[index + 1] << 16) |
+            (array[index + 2] << 8) |
+            (array[index + 3]));
+    }
 
     constructor() {
         this._onError = null;
@@ -158,7 +181,7 @@ class Demuxer {
     // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
     parseChunks(chunk, byteStart) {
         // abstract
-        throw NotImplementedException("pure virtual")
+        throw NotImplementedException('pure virtual');
     }
 }
 
