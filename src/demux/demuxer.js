@@ -17,6 +17,7 @@
  */
 
 import MediaInfo from '../core/media-info';
+import {NotImplementedException} from '../utils/exception';
 
 class Demuxer {
 
@@ -33,18 +34,10 @@ class Demuxer {
         this._audioMetadata = null;
         this._videoMetadata = null;
 
-        this._naluLengthSize = 4;
         this._timestampBase = 0;  // int32, in milliseconds
         this._timescale = 1000;
         this._duration = 0;  // int32, in milliseconds
         this._durationOverrided = false;
-        this._referenceFrameRate = {
-            fixed: true,
-            fps: 23.976,
-            fps_num: 23976,
-            fps_den: 1000
-        };
-
 
         this._videoTrack = {type: 'video', id: 1, sequenceNumber: 0, samples: [], length: 0};
         this._audioTrack = {type: 'audio', id: 2, sequenceNumber: 0, samples: [], length: 0};
@@ -165,6 +158,7 @@ class Demuxer {
     // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
     parseChunks(chunk, byteStart) {
         // abstract
+        throw NotImplementedException("pure virtual")
     }
 }
 
