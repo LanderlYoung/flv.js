@@ -21,6 +21,7 @@ import Log from '../utils/logger.js';
 import Browser from '../utils/browser.js';
 import MediaInfo from './media-info.js';
 import FLVDemuxer from '../demux/flv-demuxer.js';
+import H264Demuxer from '../demux/h264-demuxer';
 import MP4Remuxer from '../remux/mp4-remuxer.js';
 import DemuxErrors from '../demux/demux-errors.js';
 import IOController from '../io/io-controller.js';
@@ -242,47 +243,56 @@ class TransmuxingController {
             this._demuxer.timestampBase = this._mediaDataSource.segments[this._currentSegmentIndex].timestampBase;
 
             consumed = this._demuxer.parseChunks(data, byteStart);
-        } else if ((probeData = FLVDemuxer.probe(data)).match) {
-            // Always create new FLVDemuxer
-            this._demuxer = new FLVDemuxer(probeData, this._config);
-
-            if (!this._remuxer) {
-                this._remuxer = new MP4Remuxer(this._config);
-            }
-
-            let mds = this._mediaDataSource;
-            if (mds.duration != undefined && !isNaN(mds.duration)) {
-                this._demuxer.overridedDuration = mds.duration;
-            }
-            if (typeof mds.hasAudio === 'boolean') {
-                this._demuxer.overridedHasAudio = mds.hasAudio;
-            }
-            if (typeof mds.hasVideo === 'boolean') {
-                this._demuxer.overridedHasVideo = mds.hasVideo;
-            }
-
-            this._demuxer.timestampBase = mds.segments[this._currentSegmentIndex].timestampBase;
-
-            this._demuxer.onError = this._onDemuxException.bind(this);
-            this._demuxer.onMediaInfo = this._onMediaInfo.bind(this);
-
-            this._remuxer.bindDataSource(this._demuxer
-                         .bindDataSource(this._ioctl
-            ));
-
-            this._remuxer.onInitSegment = this._onRemuxerInitSegmentArrival.bind(this);
-            this._remuxer.onMediaSegment = this._onRemuxerMediaSegmentArrival.bind(this);
-
-            consumed = this._demuxer.parseChunks(data, byteStart);
         } else {
-            probeData = null;
-            Log.e(this.TAG, 'Non-FLV, Unsupported media type!');
-            Promise.resolve().then(() => {
-                this._internalAbort();
-            });
-            this._emitter.emit(TransmuxingEvents.DEMUX_ERROR, DemuxErrors.FORMAT_UNSUPPORTED, 'Non-FLV, Unsupported media type');
+            if ((probeData = FLVDemuxer.probe(data)).match) {
+                // Always create new FLVDemuxer
+                this._demuxer = new FLVDemuxer(probeData, this._config);
+            } else if ((probeData = H264Demuxer.probe(data).match)) {
+                // Always create new H264Demuxer
+                this._demuxer = new H264Demuxer(probeData, this._config);
+            } else {
+                this._demuxer = null;
+                probeData = null;
+                Log.e(this.TAG, 'Non-FLV, Unsupported media type!');
+                Promise.resolve().then(() => {
+                    this._internalAbort();
+                });
+                this._emitter.emit(TransmuxingEvents.DEMUX_ERROR, DemuxErrors.FORMAT_UNSUPPORTED, 'Non-FLV, Unsupported media type');
 
-            consumed = 0;
+                consumed = 0;
+            }
+
+            if (this._demuxer != null) {
+
+                if (!this._remuxer) {
+                    this._remuxer = new MP4Remuxer(this._config);
+                }
+
+                let mds = this._mediaDataSource;
+                if (mds.duration != undefined && !isNaN(mds.duration)) {
+                    this._demuxer.overridedDuration = mds.duration;
+                }
+                if (typeof mds.hasAudio === 'boolean') {
+                    this._demuxer.overridedHasAudio = mds.hasAudio;
+                }
+                if (typeof mds.hasVideo === 'boolean') {
+                    this._demuxer.overridedHasVideo = mds.hasVideo;
+                }
+
+                this._demuxer.timestampBase = mds.segments[this._currentSegmentIndex].timestampBase;
+
+                this._demuxer.onError = this._onDemuxException.bind(this);
+                this._demuxer.onMediaInfo = this._onMediaInfo.bind(this);
+
+                this._remuxer.bindDataSource(this._demuxer
+                    .bindDataSource(this._ioctl
+                    ));
+
+                this._remuxer.onInitSegment = this._onRemuxerInitSegmentArrival.bind(this);
+                this._remuxer.onMediaSegment = this._onRemuxerMediaSegmentArrival.bind(this);
+
+                consumed = this._demuxer.parseChunks(data, byteStart);
+            }
         }
 
         return consumed;
@@ -383,7 +393,7 @@ class TransmuxingController {
         if (this._statisticsReporter == null) {
             this._statisticsReporter = self.setInterval(
                 this._reportStatisticsInfo.bind(this),
-            this._config.statisticsInfoReportInterval);
+                this._config.statisticsInfoReportInterval);
         }
     }
 

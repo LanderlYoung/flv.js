@@ -40,8 +40,9 @@ class FlvPlayer {
             Object.assign(this._config, config);
         }
 
-        if (mediaDataSource.type.toLowerCase() !== 'flv') {
-            throw new InvalidArgumentException('FlvPlayer requires an flv MediaDataSource input!');
+        let mediaSourceType = mediaDataSource.type.toLowerCase();
+        if (mediaSourceType !== 'flv' && mediaSourceType !== 'h264') {
+            throw new InvalidArgumentException('FlvPlayer requires an flv/h264 MediaDataSource input!');
         }
 
         if (mediaDataSource.isLive === true) {
