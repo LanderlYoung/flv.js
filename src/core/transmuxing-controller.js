@@ -247,7 +247,7 @@ class TransmuxingController {
             if ((probeData = FLVDemuxer.probe(data)).match) {
                 // Always create new FLVDemuxer
                 this._demuxer = new FLVDemuxer(probeData, this._config);
-            } else if ((probeData = H264Demuxer.probe(data).match)) {
+            } else if ((probeData = H264Demuxer.probe(data)).match) {
                 // Always create new H264Demuxer
                 this._demuxer = new H264Demuxer(probeData, this._config);
             } else {
